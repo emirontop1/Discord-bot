@@ -80,9 +80,9 @@
 <div class="wrap">
   <h1>🌙 Lua String Deobfuscator</h1>
   <p class="sub">
-    <b>WeAreDevs Obfuscator</b> (ve benzeri) ile şifrelenmiş Lua scriptlerini, tarayıcıda çalışan gerçek bir Lua yorumlayıcısında (Fengari) <b>güvenli bir sandbox içinde çalıştırıp</b> gerçekte ne yaptığını (print/warn çıktısını) gösterir.<br/>
-    Roblox'a özgü şeyler (<code>game</code>, <code>workspace</code> vb.) gerçek ortam olmadığı için zararsız sahte objelerle taklit edilir, sonsuz döngülere karşı 3 saniyelik zaman aşımı korumas vardır.<br/>
-    <b>Not:</b> Bu, kodu birebir "orijinal syntax" olarak geri yazmaz — kodun çalışınca ne ürettiğini/yaptığını gösterir (dinamik analiz).
+    <b>WeAreDevs Obfuscator</b> (ve benzeri) ile şifrelenmiş Lua scriptlerini tarayıcıda çalışan gerçek bir Lua yorumlayıcısında (Fengari) <b>güvenli bir sandbox içinde çalıştırır</b>, çağırdığı her fonksiyonu (matematiği çözülmüş gerçek değerleriyle) <b>okunabilir Lua satırlarına</b> dönüştürür.<br/>
+    Roblox'a özgü şeyler (<code>game</code>, <code>workspace</code> vb.) sahte objelerle taklit edilir, sonsuz döngülere karşı 3 saniyelik zaman aşımı vardır.<br/>
+    <b>Not:</b> Sadece kodun ÇALIŞAN kısmı yeniden oluşturulur (if/loop'ların hangi dalı çalıştıysa) — çalışmayan dallar veya erişilmeyen fonksiyonlar görünmez.
   </p>
 
   <textarea id="input" placeholder="Obfuscated Lua kodunu buraya yapıştır..."></textarea>
@@ -91,7 +91,10 @@
 
   <div id="status"></div>
   <div id="resultWrap" style="display:none;">
-    <div class="copybar"><button id="copy">Sonucu Kopyala</button></div>
+    <div class="copybar"><button id="copy">Kodu Kopyala</button></div>
+    <h3 style="margin-bottom:4px;font-size:0.95rem;color:var(--muted);">Yeniden Oluşturulan Kod</h3>
+    <pre id="tracePre" style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px;white-space:pre-wrap;font-family:'SF Mono',Consolas,monospace;font-size:13px;"></pre>
+    <h3 style="margin-bottom:4px;font-size:0.95rem;color:var(--muted);">Ham print/warn Çıktısı</h3>
     <pre id="outputPre" style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px;white-space:pre-wrap;font-family:'SF Mono',Consolas,monospace;font-size:13px;"></pre>
   </div>
 </div>
