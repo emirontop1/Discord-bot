@@ -179,50 +179,69 @@ async function handleTranslateModal(interaction, res) {
 }
 
 async function handler(req, res) {
-  const signature = req.headers["x-signature-ed25519"];
-  const timestamp = req.headers["x-signature-timestamp"];
-  const rawBody = await getRawBody(req);
+  try {
+    const signature = req.headers["x-signature-ed25519"];
+    const timestamp = req.headers["x-signature-timestamp"];
 
-  const isValid = verifyKey(rawBody, signature, timestamp, PUBLIC_KEY);
-  if (!isValid) {
-    res.status(401).send("Bad request signature");
-    return;
-  }
-
-  const interaction = JSON.parse(rawBody.toString("utf-8"));
-
-  // PING - Discord portal dogrulamasi icin sart
-  if (interaction.type === 1) {
-    res.json({ type: 1 });
-    return;
-  }
-
-  // Slash komutlar + context menu komutlari
-  if (interaction.type === 2) {
-    if (interaction.data.type === 3) {
-      // Message context menu -> "Çevir"
-      openTranslateModal(interaction, res);
+    if (!signature || !timestamp) {
+      res.status(401).send("Missing signature headers");
       return;
     }
 
-    if (interaction.data.name === "ticket") {
-      await handleTicketCreate(interaction, res);
+    const rawBody = await getRawBody(req);
+
+    let isValid = false;
+    try {
+      isValid = verifyKey(rawBody, signature, timestamp, PUBLIC_KEY);
+    } catch (e) {
+      isValid = false;
+    }
+
+    if (!isValid) {
+      res.status(401).send("Bad request signature");
       return;
     }
 
-    if (interaction.data.name === "close") {
-      await handleTicketClose(interaction, res);
+    const interaction = JSON.parse(rawBody.toString("utf-8"));
+
+    // PING - Discord portal dogrulamasi icin sart
+    if (interaction.type === 1) {
+      res.json({ type: 1 });
       return;
     }
-  }
 
-  // Modal submit -> ceviri dil kodu girildi
-  if (interaction.type === 5 && interaction.data.custom_id.startsWith("translate_")) {
-    await handleTranslateModal(interaction, res);
-    return;
-  }
+    // Slash komutlar + context menu komutlari
+    if (interaction.type === 2) {
+      if (interaction.data.type === 3) {
+        // Message context menu -> "Çevir"
+        openTranslateModal(interaction, res);
+        return;
+      }
 
-  res.status(400).send("Unknown interaction");
+      if (interaction.data.name === "ticket") {
+        await handleTicketCreate(interaction, res);
+        return;
+      }
+
+      if (interaction.data.name === "close") {
+        await handleTicketClose(interaction, res);
+        return;
+      }
+    }
+
+    // Modal submit -> ceviri dil kodu girildi
+    if (interaction.type === 5 && interaction.data.custom_id.startsWith("translate_")) {
+      await handleTranslateModal(interaction, res);
+      return;
+    }
+
+    res.status(400).send("Unknown interaction");
+  } catch (err) {
+    console.error("Handler error:", err);
+    if (!res.headersSent) {
+      res.status(500).send("Internal error");
+    }
+  }
 }
 
 module.exports = handler;
