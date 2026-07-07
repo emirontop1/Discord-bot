@@ -11,14 +11,14 @@ Ticket/destek sistemi + reply ile çeviri yapan Discord botu.
 
 ## Kurulum Sonrası Doldurman Gerekenler
 
-`index.js` dosyasının en üstündeki `CONFIG` objesinde:
+Artık hiçbir ID girmen gerekmiyor — bot her sunucuda otomatik çalışır:
 
-- `TOKEN` — Discord bot token (Developer Portal > Bot > Token)
-- `TICKET_CATEGORY_ID` — Ticket kanallarının açılacağı kategori ID'si
-- `STAFF_ROLE_ID` — Ticketleri görebilecek yetkili rolünün ID'si
-- `LOG_CHANNEL_ID` — (opsiyonel) Ticket log kanalı ID'si
+- İlk ticket açıldığında **"Tickets"** adında bir kategori yoksa kendisi oluşturur
+- Ticketleri kimlerin görebileceğini **Administrator (Yönetici)** iznine sahip roller üzerinden otomatik belirler
 
-ID almak için Discord'da **Ayarlar > Gelişmiş > Geliştirici Modu**'nu açıp kategori/rol/kanala sağ tıkla > "ID'yi Kopyala".
+Sadece `.env` (lokal) veya Render Environment (`DISCORD_TOKEN`) ile token'ı vermen yeterli.
+
+`LOG_CHANNEL_ID` hâlâ opsiyonel: istersen `index.js` başındaki CONFIG'e bir kanal ID'si yazarsan ticket açılış/kapanışları o kanala loglanır, boş bırakırsan loglanmaz.
 
 ## Discord Developer Portal Ayarları
 

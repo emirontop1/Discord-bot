@@ -23,11 +23,7 @@ require("dotenv").config();
 const CONFIG = {
   TOKEN: process.env.DISCORD_TOKEN,
   PREFIX: "!", // Komut ön eki (örn: !ticket, !close, !tr)
-
-  // Ticket sistemi ayarları - KENDİ SUNUCUNA GÖRE DOLDURMAN GEREKİYOR
-  TICKET_CATEGORY_ID: "BURAYA_KATEGORI_ID", // Ticket kanallarının açılacağı kategori
-  STAFF_ROLE_ID: "BURAYA_STAFF_ROLE_ID", // Ticketleri görebilecek yetkili rolü
-  LOG_CHANNEL_ID: "", // (opsiyonel) Ticket açılış/kapanış logu - boş bırakılabilir
+  LOG_CHANNEL_ID: "", // (opsiyonel) Ticket log kanalı - boş bırakılabilir
 };
 // =============================================================
 
@@ -69,6 +65,38 @@ async function sendTicketPanel(message) {
   await message.channel.send({ embeds: [embed], components: [row] });
 }
 
+// Sunucuda "Tickets" adında bir kategori var mı bak, yoksa oluştur
+async function getOrCreateTicketCategory(guild) {
+  let category = guild.channels.cache.find(
+    (c) => c.type === ChannelType.GuildCategory && c.name.toLowerCase() === "tickets"
+  );
+  if (!category) {
+    category = await guild.channels.create({
+      name: "Tickets",
+      type: ChannelType.GuildCategory,
+    });
+  }
+  return category;
+}
+
+// Yönetici (Administrator) iznine sahip rolleri otomatik bul -> ticketleri onlar da görsün
+function getStaffOverwrites(guild) {
+  const overwrites = [];
+  guild.roles.cache.forEach((role) => {
+    if (!role.managed && role.id !== guild.roles.everyone.id && role.permissions.has(PermissionsBitField.Flags.Administrator)) {
+      overwrites.push({
+        id: role.id,
+        allow: [
+          PermissionsBitField.Flags.ViewChannel,
+          PermissionsBitField.Flags.SendMessages,
+          PermissionsBitField.Flags.ReadMessageHistory,
+        ],
+      });
+    }
+  });
+  return overwrites;
+}
+
 // Yeni ticket kanalı oluştur
 async function createTicket(interactionOrMessage, user, guild) {
   const existing = guild.channels.cache.find(
@@ -91,30 +119,17 @@ async function createTicket(interactionOrMessage, user, guild) {
         PermissionsBitField.Flags.ReadMessageHistory,
       ],
     },
+    ...getStaffOverwrites(guild),
   ];
 
-  if (CONFIG.STAFF_ROLE_ID && CONFIG.STAFF_ROLE_ID !== "BURAYA_STAFF_ROLE_ID") {
-    overwrites.push({
-      id: CONFIG.STAFF_ROLE_ID,
-      allow: [
-        PermissionsBitField.Flags.ViewChannel,
-        PermissionsBitField.Flags.SendMessages,
-        PermissionsBitField.Flags.ReadMessageHistory,
-      ],
-    });
-  }
+  const category = await getOrCreateTicketCategory(guild);
 
-  const channelOptions = {
+  const channel = await guild.channels.create({
     name: `ticket-${user.username}`,
     type: ChannelType.GuildText,
+    parent: category.id,
     permissionOverwrites: overwrites,
-  };
-
-  if (CONFIG.TICKET_CATEGORY_ID && CONFIG.TICKET_CATEGORY_ID !== "BURAYA_KATEGORI_ID") {
-    channelOptions.parent = CONFIG.TICKET_CATEGORY_ID;
-  }
-
-  const channel = await guild.channels.create(channelOptions);
+  });
 
   const embed = new EmbedBuilder()
     .setTitle("🎫 Ticket Açıldı")
