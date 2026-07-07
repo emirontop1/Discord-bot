@@ -80,21 +80,19 @@
 <div class="wrap">
   <h1>🌙 Lua String Deobfuscator</h1>
   <p class="sub">
-    <b>WeAreDevs Obfuscator</b> ile şifrelenmiş Lua scriptlerindeki <b>string sabitlerini</b> (fonksiyon isimleri, servis adları, mesajlar vb.) gerçek bir Lua yorumlayıcısı (tarayıcıda çalışan Fengari) ile çözüp gösterir.<br/>
-    <b>Not:</b> Bu araç yalnızca string tablosunu çözer — kodun VM'e gömülü asıl mantığını (kontrol akışını) geri getirmez, bu ayrı ve çok daha büyük bir iştir.
+    <b>WeAreDevs Obfuscator</b> (ve benzeri) ile şifrelenmiş Lua scriptlerini, tarayıcıda çalışan gerçek bir Lua yorumlayıcısında (Fengari) <b>güvenli bir sandbox içinde çalıştırıp</b> gerçekte ne yaptığını (print/warn çıktısını) gösterir.<br/>
+    Roblox'a özgü şeyler (<code>game</code>, <code>workspace</code> vb.) gerçek ortam olmadığı için zararsız sahte objelerle taklit edilir, sonsuz döngülere karşı 3 saniyelik zaman aşımı korumas vardır.<br/>
+    <b>Not:</b> Bu, kodu birebir "orijinal syntax" olarak geri yazmaz — kodun çalışınca ne ürettiğini/yaptığını gösterir (dinamik analiz).
   </p>
 
   <textarea id="input" placeholder="Obfuscated Lua kodunu buraya yapıştır..."></textarea>
   <br/>
-  <button id="run">Çöz</button>
+  <button id="run">Çalıştır ve Çöz</button>
 
   <div id="status"></div>
   <div id="resultWrap" style="display:none;">
     <div class="copybar"><button id="copy">Sonucu Kopyala</button></div>
-    <table id="resultTable">
-      <thead><tr><th style="width:60px;">#</th><th>Değer</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <pre id="outputPre" style="background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px;white-space:pre-wrap;font-family:'SF Mono',Consolas,monospace;font-size:13px;"></pre>
   </div>
 </div>
 
