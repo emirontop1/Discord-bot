@@ -1,18 +1,10 @@
 const { verifyKey } = require("discord-interactions");
 const translate = require("google-translate-api-x");
+const getRawBody = require("raw-body");
 
 const PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY;
 const BOT_TOKEN = process.env.DISCORD_TOKEN;
 const API = "https://discord.com/api/v10";
-
-function getRawBody(req) {
-  return new Promise((resolve, reject) => {
-    let data = "";
-    req.on("data", (chunk) => (data += chunk));
-    req.on("end", () => resolve(data));
-    req.on("error", reject);
-  });
-}
 
 async function discordFetch(path, options = {}) {
   const r = await fetch(`${API}${path}`, {
@@ -197,7 +189,7 @@ async function handler(req, res) {
     return;
   }
 
-  const interaction = JSON.parse(rawBody);
+  const interaction = JSON.parse(rawBody.toString("utf-8"));
 
   // PING - Discord portal dogrulamasi icin sart
   if (interaction.type === 1) {

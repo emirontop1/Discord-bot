@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "discord-interactions": "^4.4.0",
-    "google-translate-api-x": "^10.7.3"
+    "google-translate-api-x": "^10.7.3",
+    "raw-body": "^3.0.2"
   }
 }
