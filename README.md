@@ -1,35 +1,24 @@
-# Kaos Kontrol Bot
+# Kaos Kontrol Bot (Vercel / Interactions)
 
-Ticket/destek sistemi + reply ile çeviri yapan Discord botu.
+Discord'un HTTP Interactions modeliyle çalışır (websocket yok, tamamen serverless, Vercel ücretsiz plana uygun).
 
 ## Komutlar
 
-- `!setup-ticket` — Ticket açma panelini gönderir (Sunucuyu Yönet yetkisi gerekir)
-- `!ticket` — Yeni bir ticket kanalı açar
-- `!close` — İçinde bulunulan ticket kanalını kapatır
-- Bir mesaja **reply** atıp `!<dilkodu>` yazmak (örn. `!tr`, `!en`, `!de`) — reply attığın mesajı o dile çevirir
+- `/ticket` — Yeni bir destek talebi (ticket) kanalı açar
+- `/close` — İçinde bulunulan ticket kanalını kapatır
+- Bir mesaja **sağ tık → Apps → Çevir** — küçük bir pencere açılır, dil kodunu yazınca (tr, en, de...) mesajı çevirir
 
-## Kurulum Sonrası Doldurman Gerekenler
+Ticket kategorisi ve yetkili görünürlüğü tamamen otomatik: "Tickets" kategorisi yoksa oluşturulur, Administrator izni olan roller otomatik yetkili sayılır.
 
-Artık hiçbir ID girmen gerekmiyor — bot her sunucuda otomatik çalışır:
+## Gerekli Environment Variable'lar (Vercel)
 
-- İlk ticket açıldığında **"Tickets"** adında bir kategori yoksa kendisi oluşturur
-- Ticketleri kimlerin görebileceğini **Administrator (Yönetici)** iznine sahip roller üzerinden otomatik belirler
+- `DISCORD_TOKEN` — Bot token
+- `DISCORD_PUBLIC_KEY` — Developer Portal > General Information > Public Key
+- `DISCORD_APP_ID` — Developer Portal > General Information > Application ID
+- `SETUP_SECRET` — rastgele bir şifre, sadece `/api/setup` endpoint'ini korumak için
 
-Sadece `.env` (lokal) veya Render Environment (`DISCORD_TOKEN`) ile token'ı vermen yeterli.
+## Deploy sonrası tek seferlik adım
 
-`LOG_CHANNEL_ID` hâlâ opsiyonel: istersen `index.js` başındaki CONFIG'e bir kanal ID'si yazarsan ticket açılış/kapanışları o kanala loglanır, boş bırakırsan loglanmaz.
-
-## Discord Developer Portal Ayarları
-
-Bot'un mesaj içeriğini okuyabilmesi için:
-1. https://discord.com/developers/applications adresine git, botunu seç
-2. **Bot** sekmesinde **MESSAGE CONTENT INTENT**'i aç
-3. Botu sunucuna davet ederken şu izinler yeterli: `Manage Channels`, `Send Messages`, `Read Message History`, `View Channels`, `Manage Roles` (ticket kanalı izinleri için)
-
-## Render'a Deploy
-
-1. Bu repoyu Render'da **New > Background Worker** olarak bağla
-2. Build Command: `npm install`
-3. Start Command: `npm start`
-4. (Önerilir) Token'ı kod içinden çıkarıp Render'ın **Environment** kısmına `DISCORD_TOKEN` olarak eklersin, `index.js`'te `TOKEN: process.env.DISCORD_TOKEN` yaparsın.
+1. Vercel projenin URL'sini al (örn `https://xxx.vercel.app`)
+2. `https://xxx.vercel.app/api/setup?secret=<SETUP_SECRET>` adresine bir istek at (tarayıcıdan açman yeterli) — bu, `/ticket`, `/close` ve `Çevir` komutlarını Discord'a kaydeder
+3. Discord Developer Portal'da botun **General Information** sayfasında **Interactions Endpoint URL** alanına `https://xxx.vercel.app/api/interactions` yaz ve kaydet (Discord buraya bir doğrulama isteği atar, endpoint otomatik cevap verir)
