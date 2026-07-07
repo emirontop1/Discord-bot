@@ -5,9 +5,6 @@ const PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY;
 const BOT_TOKEN = process.env.DISCORD_TOKEN;
 const API = "https://discord.com/api/v10";
 
-// Bu ikisi olmadan raw body signature dogrulamasi calismaz
-module.exports.config = { api: { bodyParser: false } };
-
 function getRawBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
@@ -189,7 +186,7 @@ async function handleTranslateModal(interaction, res) {
   }
 }
 
-module.exports = async (req, res) => {
+async function handler(req, res) {
   const signature = req.headers["x-signature-ed25519"];
   const timestamp = req.headers["x-signature-timestamp"];
   const rawBody = await getRawBody(req);
@@ -234,4 +231,8 @@ module.exports = async (req, res) => {
   }
 
   res.status(400).send("Unknown interaction");
-};
+}
+
+module.exports = handler;
+// Bu olmadan Vercel body'yi otomatik parse eder ve imza dogrulamasi bozulur
+module.exports.config = { api: { bodyParser: false } };
