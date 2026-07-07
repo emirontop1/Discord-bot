@@ -14,7 +14,20 @@ const {
   ChannelType,
 } = require("discord.js");
 const translate = require("google-translate-api-x");
+const express = require("express");
 require("dotenv").config();
+
+// ==================== KEEP-ALIVE SUNUCU ====================
+// Render'ın ücretsiz Web Service planı botu ayakta tutabilmemiz için
+// HTTP isteği bekliyor. Dışarıdan (UptimeRobot vb.) buraya periyodik
+// ping atılırsa Render botu asla uyutmaz.
+const app = express();
+app.get("/", (req, res) => {
+  res.send(`Bot çalışıyor: ${client.user ? client.user.tag : "başlatılıyor..."}`);
+});
+app.listen(process.env.PORT || 3000, () => {
+  console.log("🌐 Keep-alive sunucusu ayakta.");
+});
 
 // ==================== AYARLAR (CONFIG) ====================
 // Token repo public olabileceği için env variable'dan okunuyor (güvenlik).
