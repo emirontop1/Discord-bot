@@ -1,24 +1,36 @@
-# Kaos Kontrol Bot (Vercel / Interactions)
+# Lua Toolkit + Discord Bot
 
-Discord'un HTTP Interactions modeliyle çalışır (websocket yok, tamamen serverless, Vercel ücretsiz plana uygun).
+Bu repo iki farklı şeyi barındırıyor:
 
-## Komutlar
+## 1. Discord Bot (`/api`)
+Ticket sistemi + reply ile çeviri yapan Discord botu, Vercel serverless (Discord Interactions modeli) üzerinde çalışır. Detaylar için bkz. aşağıdaki "Discord Bot" bölümü.
 
-- `/ticket` — Yeni bir destek talebi (ticket) kanalı açar
-- `/close` — İçinde bulunulan ticket kanalını kapatır
-- Bir mesaja **sağ tık → Apps → Çevir** — küçük bir pencere açılır, dil kodunu yazınca (tr, en, de...) mesajı çevirir
+## 2. Lua Toolkit (statik site — `/`, `/compiler`, `/deobfuscator`, `/jsUtils`)
+Tarayıcıda çalışan Lua/Luau araçları. Build adımı yok, tamamen statik HTML/JS. Hem **GitHub Pages** hem **Vercel** (aynı repo, otomatik) üzerinden servis edilir.
 
-Ticket kategorisi ve yetkili görünürlüğü tamamen otomatik: "Tickets" kategorisi yoksa oluşturulur, Administrator izni olan roller otomatik yetkili sayılır.
+- **`/deobfuscator`** — WeAreDevs Obfuscator ile şifrelenmiş scriptleri gerçek bir Lua yorumlayıcısında (Fengari) güvenli bir sandbox'ta çalıştırıp çağrılan fonksiyonları okunabilir hale getirir. `loadstring` içeriğini de yakalar. **Not:** Bu dinamik analizdir — VM'e gömülü kontrol akışını/değişken isimlerini birebir geri getirmez (bu, ayrı ve çok daha büyük bir "gerçek decompiler" projesi olurdu).
+- **`/compiler`** — Lua kodundaki string ve sayı sabitlerini şifreler (obfuscate), isteğe bağlı junk kod ekler. Değişken yeniden adlandırma YOK (güvenli scope analizi olmadan riskli).
+- **`/jsUtils`** — İkisinin de kullandığı ortak Lua tokenize/maskeleme yardımcıları (`luaLexer.js`).
 
-## Gerekli Environment Variable'lar (Vercel)
+### GitHub Pages Kurulumu
+Settings → Pages → Source: Deploy from a branch → Branch: `main`, klasör: `/` (root).
 
-- `DISCORD_TOKEN` — Bot token
-- `DISCORD_PUBLIC_KEY` — Developer Portal > General Information > Public Key
-- `DISCORD_APP_ID` — Developer Portal > General Information > Application ID
-- `SETUP_SECRET` — rastgele bir şifre, sadece `/api/setup` endpoint'ini korumak için
+---
 
-## Deploy sonrası tek seferlik adım
+## Discord Bot Detayları
 
-1. Vercel projenin URL'sini al (örn `https://xxx.vercel.app`)
-2. `https://xxx.vercel.app/api/setup?secret=<SETUP_SECRET>` adresine bir istek at (tarayıcıdan açman yeterli) — bu, `/ticket`, `/close` ve `Çevir` komutlarını Discord'a kaydeder
-3. Discord Developer Portal'da botun **General Information** sayfasında **Interactions Endpoint URL** alanına `https://xxx.vercel.app/api/interactions` yaz ve kaydet (Discord buraya bir doğrulama isteği atar, endpoint otomatik cevap verir)
+Ticket/destek sistemi + reply ile çeviri yapan Discord botu.
+
+### Komutlar
+- `!setup-ticket`, `!ticket`, `!close`
+- Bir mesaja **reply** atıp `!<dilkodu>` yazmak (örn. `!tr`, `!en`) — reply attığın mesajı o dile çevirir
+
+### Environment Variable'lar (Vercel)
+- `DISCORD_TOKEN`
+- `DISCORD_PUBLIC_KEY`
+- `DISCORD_APP_ID`
+- `SETUP_SECRET`
+
+### Deploy sonrası tek seferlik adım
+1. `https://<proje>.vercel.app/api/setup?secret=<SETUP_SECRET>` adresini bir kez aç (komutları Discord'a kaydeder)
+2. Discord Developer Portal'da **Interactions Endpoint URL**'i `https://<proje>.vercel.app/api/interactions` yap
