@@ -48,6 +48,15 @@ warn = function(...)
   __logCall("warn", ...)
 end
 
+local function __hookedLoad(src, ...)
+  if type(src) == "string" then
+    __pushLoadstring(src)
+  end
+  return function() end
+end
+if loadstring then loadstring = __hookedLoad end
+load = __hookedLoad
+
 local __knownGlobals = {
   "game","workspace","script","Instance","task","wait","spawn","delay","tick",
   "Enum","UserInputService","Players","RunService","ReplicatedStorage",
@@ -87,6 +96,7 @@ function runLuaSandbox(userCode) {
 
   let realOutput = "";
   const traceLines = [];
+  const loadstringContents = [];
 
   function realPrintHook(L) {
     const n = lua.lua_gettop(L);
@@ -106,10 +116,19 @@ function runLuaSandbox(userCode) {
     return 0;
   }
 
+  function pushLoadstringHook(L) {
+    const src = to_jsstring(lauxlib.luaL_tolstring(L, 1));
+    lua.lua_pop(L, 1);
+    loadstringContents.push(src);
+    return 0;
+  }
+
   lua.lua_pushjsfunction(L, realPrintHook);
   lua.lua_setglobal(L, to_luastring("__realPrintJS"));
   lua.lua_pushjsfunction(L, pushTraceHook);
   lua.lua_setglobal(L, to_luastring("__pushTrace"));
+  lua.lua_pushjsfunction(L, pushLoadstringHook);
+  lua.lua_setglobal(L, to_luastring("__pushLoadstring"));
 
   const fullScript = wrapUserCode(userCode);
   const status = lauxlib.luaL_dostring(L, to_luastring(fullScript));
@@ -124,10 +143,11 @@ function runLuaSandbox(userCode) {
     );
     e.partialTrace = traceLines;
     e.partialOutput = realOutput;
+    e.partialLoadstring = loadstringContents;
     throw e;
   }
 
-  return { trace: traceLines, output: realOutput };
+  return { trace: traceLines, output: realOutput, loadstrings: loadstringContents };
 }
 
 // ==================== UI ====================
@@ -137,6 +157,8 @@ const statusEl = document.getElementById("status");
 const resultWrap = document.getElementById("resultWrap");
 const tracePre = document.getElementById("tracePre");
 const outputPre = document.getElementById("outputPre");
+const loadstringSection = document.getElementById("loadstringSection");
+const loadstringPre = document.getElementById("loadstringPre");
 const copyBtn = document.getElementById("copy");
 
 let lastTraceText = "";
@@ -160,10 +182,16 @@ runBtn.addEventListener("click", () => {
 
   setTimeout(() => {
     try {
-      const { trace, output } = runLuaSandbox(code);
+      const { trace, output, loadstrings } = runLuaSandbox(code);
       lastTraceText = trace.join("\n") || "(hiç fonksiyon çağrısı yakalanmadı)";
       tracePre.textContent = lastTraceText;
       outputPre.textContent = output || "(print/warn çıktısı yok)";
+      if (loadstrings && loadstrings.length) {
+        loadstringSection.style.display = "block";
+        loadstringPre.textContent = loadstrings.join("\n\n----------\n\n");
+      } else {
+        loadstringSection.style.display = "none";
+      }
       statusEl.className = "ok";
       statusEl.textContent = "✅ Script çalıştırıldı, yeniden oluşturulan kod aşağıda.";
       resultWrap.style.display = "block";
@@ -174,6 +202,10 @@ runBtn.addEventListener("click", () => {
         lastTraceText = err.partialTrace.join("\n");
         tracePre.textContent = lastTraceText + "\n-- (hatadan önceki kısım)";
         outputPre.textContent = err.partialOutput || "";
+        if (err.partialLoadstring && err.partialLoadstring.length) {
+          loadstringSection.style.display = "block";
+          loadstringPre.textContent = err.partialLoadstring.join("\n\n----------\n\n");
+        }
         resultWrap.style.display = "block";
       }
     } finally {
